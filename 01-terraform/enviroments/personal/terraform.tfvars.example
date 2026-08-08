@@ -1,0 +1,6 @@
+# environments/personal/terraform.tfvars.example
+
+environment        = ""
+aws_region         = ""
+cluster_name       = ""
+use_existing_roles = false
