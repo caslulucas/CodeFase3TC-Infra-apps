@@ -147,15 +147,13 @@ resource "aws_route_table" "private" {
 
 #Associa a tabela de rotas privadas com as subnets privadas
 resource "aws_route_table_association" "private_a" {
-
+  count = var.enable_nat_gateway ? 1 : 0
   subnet_id = aws_subnet.private_a.id
-
-  route_table_id = aws_route_table.private.id
+  route_table_id = aws_route_table.private[0].id
 }
 
 resource "aws_route_table_association" "private_b" {
-
+  count = var.enable_nat_gateway ? 1 : 0
   subnet_id = aws_subnet.private_b.id
-
-  route_table_id = aws_route_table.private.id
+  route_table_id = aws_route_table.private[0].id
 }

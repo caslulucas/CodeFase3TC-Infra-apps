@@ -6,13 +6,9 @@
 locals {
   create_iam_roles = var.environment == "personal"
 
-  cluster_role_arn = local.create_iam_roles
-    ? aws_iam_role.eks_cluster[0].arn
-    : var.lab_role_arn
+  cluster_role_arn = local.create_iam_roles ? aws_iam_role.eks_cluster[0].arn : var.lab_role_arn
 
-  node_role_arn = local.create_iam_roles
-    ? aws_iam_role.eks_nodes[0].arn
-    : var.lab_role_arn
+  node_role_arn = local.create_iam_roles ? aws_iam_role.eks_nodes[0].arn : var.lab_role_arn
 }
 
 # ---------------------------------------------------------------------
