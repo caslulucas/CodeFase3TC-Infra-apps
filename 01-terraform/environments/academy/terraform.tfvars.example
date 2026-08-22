@@ -1,8 +1,0 @@
-# environments/academy/terraform.tfvars.example
-
-environment        = ""
-aws_region         = ""
-cluster_name       = ""
-use_existing_roles = true
-eks_role_arn       = "ARN_DA_LABROLE"
-node_role_arn      = "ARN_DA_LABROLE"
