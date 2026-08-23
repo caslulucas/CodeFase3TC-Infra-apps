@@ -24,3 +24,25 @@ variable "lab_role_arn" {
   type = string
   default = ""
 }
+
+variable "db_password" {
+  description = "Senha PostgreSQL"
+  type = string
+  sensitive = true
+}
+
+#Controle de recursos AWS Academy
+variable "enable_rds" {
+  type    = bool
+  default = true
+}
+
+variable "enable_redis" {
+  type    = bool
+  default = true
+}
+
+variable "enable_eks" {
+  type    = bool
+  default = true
+}

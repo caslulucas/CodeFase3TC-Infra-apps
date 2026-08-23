@@ -56,8 +56,7 @@ resource "aws_db_instance" "this" {
   storage_type = "gp3"
   username = "postgres"
 
-  #Mudar Senha
-  password = "ChangeMe123!"
+  password = var.db_password
   
   db_subnet_group_name = aws_db_subnet_group.this.name
 

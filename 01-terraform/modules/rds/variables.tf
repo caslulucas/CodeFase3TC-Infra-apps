@@ -25,3 +25,9 @@ variable "vpc_id" {
   description = "ID da VPC"
   type = string
 }
+
+variable "db_password" {
+  description = "Senha do banco"
+  type = string
+  sensitive = true
+}
