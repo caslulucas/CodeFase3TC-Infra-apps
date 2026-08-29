@@ -1,0 +1,142 @@
+name: Evaluation CI
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "02-services/evaluation-service/**"
+      - ".github/workflows/evaluation-ci.yaml"
+
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "02-services/evaluation-service/**"
+      - ".github/workflows/evaluation-ci.yaml"
+
+permissions:
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  SERVICE_DIR: 02-services/evaluation-service
+  ECR_REPOSITORY: togglemaster-evaluation
+  LOCAL_IMAGE: togglemaster-evaluation:${{ github.sha }}
+  GITOPS_REPOSITORY: caslulucas/CodeFase3TC-GitOps
+  GITOPS_DEPLOYMENT: apps/evaluation/deployment.yaml
+
+jobs:
+  validate-build-and-scan:
+    name: Test, Security and Docker Build
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ env.SERVICE_DIR }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.22"
+          cache: true
+          cache-dependency-path: ${{ env.SERVICE_DIR }}/go.sum
+
+      - name: Download Go dependencies
+        run: go mod download
+
+      - name: Build application
+        run: go build ./...
+
+      - name: Run unit tests
+        run: go test -v ./...
+
+      - name: Run GolangCI-Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          working-directory: ${{ env.SERVICE_DIR }}
+          version: latest
+
+      - name: Install Gosec
+        run: go install github.com/securego/gosec/v2/cmd/gosec@latest
+
+      - name: Run Gosec SAST
+        run: gosec ./...
+
+      - name: Run Trivy filesystem scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          scan-type: fs
+          scan-ref: ${{ env.SERVICE_DIR }}
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      - name: Build Docker image
+        run: docker build -t "${LOCAL_IMAGE}" .
+
+      - name: Run Trivy container scan
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ env.LOCAL_IMAGE }}
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: "1"
+          format: table
+
+      - name: Configure AWS credentials
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Tag and push image to Amazon ECR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          IMAGE_URI="${{ steps.login-ecr.outputs.registry }}/${ECR_REPOSITORY}:${GITHUB_SHA}"
+
+          docker tag "${LOCAL_IMAGE}" "${IMAGE_URI}"
+          docker push "${IMAGE_URI}"
+
+          echo "IMAGE_URI=${IMAGE_URI}" >> "${GITHUB_ENV}"
+
+      - name: Update Evaluation image in GitOps repository
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        working-directory: ${{ github.workspace }}
+        env:
+          GITOPS_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+        run: |
+          git clone \
+            "https://x-access-token:${GITOPS_TOKEN}@github.com/${GITOPS_REPOSITORY}.git" \
+            gitops
+
+          cd gitops
+
+          sed -i -E \
+            "s|^([[:space:]]*)image: .*togglemaster-evaluation:.*$|\1image: ${IMAGE_URI}|" \
+            "${GITOPS_DEPLOYMENT}"
+
+          if git diff --quiet; then
+            echo "O deployment já contém a imagem ${IMAGE_URI}."
+            exit 0
+          fi
+
+          git config user.name "togglemaster-ci"
+          git config user.email "togglemaster-ci@users.noreply.github.com"
+
+          git add "${GITOPS_DEPLOYMENT}"
+          git commit -m "chore(evaluation): update image to ${GITHUB_SHA}"
+          git push origin main

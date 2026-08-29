@@ -1,4 +1,4 @@
-# Tech Challenge Fase 3 – Infraestrutura, Aplicações e DevSecOps
+# 🚀Tech Challenge Fase 3 – Infraestrutura, Aplicações e DevSecOps
 
 ## Sobre o Projeto
 
