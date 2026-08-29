@@ -73,7 +73,7 @@ jobs:
 
       # Verifica vulnerabilidades críticas nas dependências e arquivos.
       - name: Run Trivy filesystem scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: ${{ env.SERVICE_DIR }}
@@ -89,7 +89,7 @@ jobs:
 
       # Analisa a imagem completa antes da publicação.
       - name: Run Trivy container scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@master
         with:
           image-ref: togglemaster-flag:${{ github.sha }}
           severity: CRITICAL
