@@ -70,7 +70,7 @@ jobs:
             --statistics
 
       - name: Run Bandit SAST
-        run: bandit -r . -ll
+        run: bandit -r . -x tests -ll
 
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master

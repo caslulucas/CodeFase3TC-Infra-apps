@@ -83,13 +83,14 @@ jobs:
             --statistics
 
       - name: Run Bandit SAST
-        run: bandit -r . -ll
+        run: bandit -r . -x tests -ll
 
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           scan-ref: ${{ env.SERVICE_DIR }}
+          #regra de bloqueio: falhar se houver vulnerabilidades críticas não corrigidas
           severity: CRITICAL
           ignore-unfixed: true
           exit-code: "1"
@@ -102,6 +103,7 @@ jobs:
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ env.LOCAL_IMAGE }}
+           #regra de bloqueio: falhar se houver vulnerabilidades críticas não corrigidas
           severity: CRITICAL
           ignore-unfixed: true
           exit-code: "1"

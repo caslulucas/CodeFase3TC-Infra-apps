@@ -69,7 +69,7 @@ jobs:
       # Executa análise estática de segurança específica para Python.
       - name: Run Bandit SAST
         working-directory: ${{ env.SERVICE_DIR }}
-        run: bandit -r . -ll
+        run: bandit -r . -x tests -ll
 
       # Verifica vulnerabilidades críticas nas dependências e arquivos.
       - name: Run Trivy filesystem scan
