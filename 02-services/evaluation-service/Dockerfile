@@ -1,32 +1,31 @@
-FROM golang:1.22-alpine AS builder
-RUN adduser -D LucasDev
-USER LucasDev
+FROM golang:1.26-alpine AS builder
+
 WORKDIR /app
-COPY --chown=LucasDev:LucasDev go.mod go.sum ./
-COPY --chown=LucasDev:LucasDev . .
-RUN go mod tidy
-RUN go build -o /app/evaluation-service-main .
 
+COPY go.mod go.sum ./
 
+RUN go mod download
+
+COPY . .
+
+RUN CGO_ENABLED=0 GOOS=linux \
+    go build -trimpath -ldflags="-s -w" \
+    -o /app/evaluation-service .
 
 FROM alpine:3.20
-RUN apk add --no-cache ca-certificates && \ 
-    adduser -D LucasDev
+
+RUN apk add --no-cache ca-certificates \
+    && adduser -D -H -s /sbin/nologin LucasDev
+
 WORKDIR /app
-COPY --from=builder --chown=LucasDev:LucasDev /app/evaluation-service-main /app/evaluation-service
+
+COPY --from=builder \
+    --chown=LucasDev:LucasDev \
+    /app/evaluation-service \
+    /app/evaluation-service
+
 USER LucasDev
+
 EXPOSE 8004
+
 CMD ["/app/evaluation-service"]
-
-
-
-
-
-
-
-
-#testar sem cache
-# docker build --target builder -t evaluation-service-builder-test ./evaluation-service-main
-#refazer sem usar camada anterior
-#docker builder prune -af
-# docker build --no-cache -t evaluation-service-test ./evaluation-service-main
