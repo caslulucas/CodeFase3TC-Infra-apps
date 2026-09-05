@@ -110,7 +110,7 @@ func (a *App) fetchFromServices(flagName string) (*CombinedFlagInfo, error) {
 		return nil, flagErr
 	}
 	if ruleErr != nil {
-		log.Printf("Aviso: Nenhuma regra de segmentação encontrada para '%s'. Usando padrão.", flagName)
+		log.Printf("Aviso: Nenhuma regra de segmentação encontrada")
 	}
 
 	return &CombinedFlagInfo{
@@ -197,7 +197,7 @@ func (a *App) runEvaluationLogic(info *CombinedFlagInfo, userID string) bool {
 		// Converte o 'value' (que é interface{}) para float64
 		percentage, ok := rule.Value.(float64)
 		if !ok {
-			log.Printf("Erro: valor da regra de porcentagem não é um número para a flag '%s'", info.Flag.Name)
+			log.Printf("Erro: valor da regra de porcentagem não é um número válido")
 			return false
 		}
 
