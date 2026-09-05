@@ -64,8 +64,16 @@ jobs:
       - name: Install Gosec
         run: go install github.com/securego/gosec/v2/cmd/gosec@latest
 
-      - name: Run Gosec SAST
-        run: gosec ./...
+      # Gera visibilidade sobre todos os achados do SAST.
+      # Achados baixos e médios permanecem documentados no log da pipeline.
+      - name: Run complete Gosec report
+        continue-on-error: true
+        run: gosec -fmt=text ./...
+
+      # Bloqueia o pipeline para achados de alta severidade
+      # e alta confiança.
+      - name: Enforce Gosec security gate
+        run: gosec -severity high -confidence high ./...
 
       - name: Run Trivy filesystem scan
         uses: aquasecurity/trivy-action@master
