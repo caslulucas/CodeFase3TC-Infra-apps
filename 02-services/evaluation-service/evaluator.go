@@ -40,14 +40,14 @@ func (a *App) getCombinedFlagInfo(flagName string) (*CombinedFlagInfo, error) {
 		// Cache HIT
 		var info CombinedFlagInfo
 		if err := json.Unmarshal([]byte(val), &info); err == nil {
-			log.Printf("Cache HIT para flag '%s'", flagName)
+			log.Printf("Cache HIT")
 			return &info, nil
 		}
 		// Se o unmarshal falhar, trata como cache miss
-		log.Printf("Erro ao desserializar cache para flag '%s': %v", flagName, err)
+		log.Printf("Erro ao desserializar cache: %v", err)
 	}
 
-	log.Printf("Cache MISS para flag '%s'", flagName)
+	log.Printf("Cache MISS")
 	// 2. Cache MISS - Buscar dos serviços
 	info, err := a.fetchFromServices(flagName)
 	if err != nil {
@@ -58,8 +58,7 @@ func (a *App) getCombinedFlagInfo(flagName string) (*CombinedFlagInfo, error) {
 	jsonData, err := json.Marshal(info)
 	if err != nil {
 		log.Printf(
-			"Erro ao serializar dados da flag '%s' para cache: %v",
-			flagName,
+			"Erro ao serializar dados da flag para cache: %v",
 			err,
 		)
 
