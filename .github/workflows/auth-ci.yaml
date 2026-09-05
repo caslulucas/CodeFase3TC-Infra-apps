@@ -25,6 +25,7 @@ env:
   LOCAL_IMAGE: togglemaster-auth:${{ github.sha }}
   GITOPS_REPOSITORY: caslulucas/CodeFase3TC-GitOps
   GITOPS_DEPLOYMENT: apps/auth/deployment.yaml
+  GOLANGCI_LINT_VERSION: v2.13.2
 
 jobs:
   validate-build-and-scan:
@@ -40,32 +41,39 @@ jobs:
       - name: Checkout source code
         uses: actions/checkout@v4
 
-      # Instala o Go utilizado pelo serviço Auth.
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version-file: ${{ env.SERVICE_DIR }}/go.mod
           cache: true
-          cache-dependency-path: ${{ env.SERVICE_DIR }}/go.mod
+          cache-dependency-path: ${{ env.SERVICE_DIR }}/go.sum
 
-      # Baixa e valida as dependências declaradas no go.mod.
       - name: Download Go dependencies
+        working-directory: ${{ env.SERVICE_DIR }}
         run: go mod download
 
-      # Verifica se o código pode ser compilado.
       - name: Build application
+        working-directory: ${{ env.SERVICE_DIR }}
         run: go build ./...
 
-      # Executa os testes unitários do microsserviço.
       - name: Run unit tests
+        working-directory: ${{ env.SERVICE_DIR }}
         run: go test -v ./...
 
-      # Executa lint para identificar problemas de qualidade.
+      # Compila o GolangCI-Lint usando a mesma toolchain Go do projeto.
+      - name: Install GolangCI-Lint
+        run: |
+          go install \
+            github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VERSION}
+
+          echo "$(go env GOPATH)/bin" >> "${GITHUB_PATH}"
+
+      # O GITHUB_PATH adicionado acima fica disponível neste passo.
       - name: Run GolangCI-Lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          working-directory: ${{ env.SERVICE_DIR }}
-          version: latest
+        working-directory: ${{ env.SERVICE_DIR }}
+        run: |
+          golangci-lint version
+          golangci-lint run ./...
 
       # Instala o Gosec, ferramenta SAST para código Go.
       - name: Install Gosec
