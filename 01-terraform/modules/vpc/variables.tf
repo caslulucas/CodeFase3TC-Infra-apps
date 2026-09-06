@@ -17,6 +17,6 @@ variable "availability_zones" {
 # Define se o NAT Gateway será criado para academy
 variable "enable_nat_gateway" {
   description = "Controla a criação do NAT Gateway"
-  type = bool
-  default = false
+  type        = bool
+  default     = false
 }

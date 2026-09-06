@@ -1,10 +1,10 @@
 module "vpc" {
   source = "./modules/vpc"
 
-  project_name = var.project_name
-  environment  = var.environment
- #enable_nat_gateway = var.enable_nat_gateway
-  vpc_cidr = "10.0.0.0/16"
+  project_name       = var.project_name
+  environment        = var.environment
+  enable_nat_gateway = var.enable_nat_gateway
+  vpc_cidr           = "10.0.0.0/16"
 
   availability_zones = [
     "us-east-1a",
@@ -36,18 +36,22 @@ module "ecr" {
 }
 
 module "eks" {
-  source = "./modules/eks"
+  source       = "./modules/eks"
   project_name = var.project_name
-  environment = var.environment
+  environment  = var.environment
   cluster_name = "${var.project_name}-${var.environment}"
 
   #controle de recursos AWS
   count = var.enable_eks ? 1 : 0
 
-  vpc_id = module.vpc.vpc_id
-  public_subnet_ids = module.vpc.public_subnet_ids
+  vpc_id             = module.vpc.vpc_id
+  public_subnet_ids  = module.vpc.public_subnet_ids
   private_subnet_ids = module.vpc.private_subnet_ids
-  lab_role_arn = var.lab_role_arn
+  lab_role_arn       = var.lab_role_arn
+
+  depends_on = [
+    module.vpc
+  ]
 }
 
 # =====================================================================
@@ -55,9 +59,9 @@ module "eks" {
 # =====================================================================
 
 module "dynamodb" {
-  source = "./modules/dynamodb"
+  source       = "./modules/dynamodb"
   project_name = var.project_name
-  environment = var.environment
+  environment  = var.environment
 }
 
 
@@ -66,9 +70,9 @@ module "dynamodb" {
 # =====================================================================
 
 module "sqs" {
-  source = "./modules/sqs"
+  source       = "./modules/sqs"
   project_name = var.project_name
-  environment = var.environment
+  environment  = var.environment
 }
 
 
@@ -77,16 +81,16 @@ module "sqs" {
 # =====================================================================
 
 module "auth_db" {
-  source = "./modules/rds"
+  source       = "./modules/rds"
   project_name = var.project_name
-  environment = var.environment
-  identifier = "auth-db"
-  db_password = var.db_password
+  environment  = var.environment
+  identifier   = "auth-db"
+  db_password  = var.db_password
 
- #controle de recursos AWS
+  #controle de recursos AWS
   count = var.enable_rds ? 1 : 0
-  
-  vpc_id = module.vpc.vpc_id
+
+  vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
 }
 
@@ -95,17 +99,17 @@ module "auth_db" {
 # =====================================================================
 
 module "flag_db" {
-  source = "./modules/rds"
+  source       = "./modules/rds"
   project_name = var.project_name
-  environment = var.environment
-  identifier = "flag-db"
-  
- #controle de recursos AWS
+  environment  = var.environment
+  identifier   = "flag-db"
+
+  #controle de recursos AWS
   count = var.enable_rds ? 1 : 0
 
-  vpc_id = module.vpc.vpc_id
+  vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
-  db_password = var.db_password
+  db_password        = var.db_password
 }
 
 # =====================================================================
@@ -113,17 +117,17 @@ module "flag_db" {
 # =====================================================================
 
 module "targeting_db" {
-  source = "./modules/rds"
+  source       = "./modules/rds"
   project_name = var.project_name
-  environment = var.environment
+  environment  = var.environment
 
- #controle de recursos AWS
+  #controle de recursos AWS
   count = var.enable_rds ? 1 : 0
 
 
-  db_password = var.db_password
-  identifier = "targeting-db"
-  vpc_id = module.vpc.vpc_id
+  db_password        = var.db_password
+  identifier         = "targeting-db"
+  vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
 }
 
@@ -132,13 +136,13 @@ module "targeting_db" {
 # =====================================================================
 
 module "redis" {
-  source = "./modules/redis"
+  source       = "./modules/redis"
   project_name = var.project_name
 
   #controle de recursos AWS
   count = var.enable_redis ? 1 : 0
 
-  environment = var.environment
-  vpc_id = module.vpc.vpc_id
+  environment        = var.environment
+  vpc_id             = module.vpc.vpc_id
   private_subnet_ids = module.vpc.private_subnet_ids
 }

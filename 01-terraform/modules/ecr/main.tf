@@ -7,7 +7,7 @@
 
 resource "aws_ecr_repository" "this" {
   for_each = toset(var.repositories)
-  name = "${var.project_name}-${each.value}"
+  name     = "${var.project_name}-${each.value}"
 
   image_scanning_configuration {
     # Permite identificar imagens vulneráveis
@@ -19,7 +19,7 @@ resource "aws_ecr_repository" "this" {
   # Mantém imagens imutáveis para evitar sobrescrita acidental
   image_tag_mutability = "IMMUTABLE"
   tags = {
-    Name = "${var.project_name}-${each.value}"
+    Name        = "${var.project_name}-${each.value}"
     Environment = var.environment
   }
 }

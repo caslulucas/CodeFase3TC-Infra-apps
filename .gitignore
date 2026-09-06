@@ -1,7 +1,13 @@
 #Terraform
-.terraform/
+**/.terraform/*
 *.tfstate
 *.tfstate.*
+*.tfplan
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
 
 #VsCode
 .vscode/ 
@@ -17,4 +23,5 @@ __pycache__/
 *.log
 *.tmp
 .DS_Store
-
+*.tfvars
+*.tfvars.json
