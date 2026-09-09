@@ -45,7 +45,7 @@ resource "aws_subnet" "public_b" {
 
   tags = {
     Name = "${var.project_name}-${var.environment}-public-b"
-    
+
     "kubernetes.io/role/elb" = "1"
   }
 }
@@ -60,7 +60,7 @@ resource "aws_subnet" "private_a" {
   tags = {
     Name = "${var.project_name}-${var.environment}-private-a"
 
-     #tag para que o ELB seja criado nas subnets privadas
+    #tag para que o ELB seja criado nas subnets privadas
     "kubernetes.io/role/internal-elb" = "1"
   }
 }
@@ -112,7 +112,7 @@ resource "aws_route_table_association" "public_b" {
 
 # Endereço IP público estático utilizado pelo NAT Gateway
 resource "aws_eip" "nat" {
-  count = var.enable_nat_gateway ? 1 : 0
+  count  = var.enable_nat_gateway ? 1 : 0
   domain = "vpc"
   tags = {
     Name = "${var.project_name}-${var.environment}-nat-eip"
@@ -121,9 +121,9 @@ resource "aws_eip" "nat" {
 
 # Permite que recursos em subnets privadas acessem a internet
 resource "aws_nat_gateway" "this" {
-  count = var.enable_nat_gateway ? 1 : 0
+  count         = var.enable_nat_gateway ? 1 : 0
   allocation_id = aws_eip.nat[0].id
-  subnet_id = aws_subnet.public_a.id
+  subnet_id     = aws_subnet.public_a.id
   tags = {
     Name = "${var.project_name}-${var.environment}-nat"
   }
@@ -134,7 +134,7 @@ resource "aws_nat_gateway" "this" {
 
 # Tabela de rotas utilizada pelas subnets privadas
 resource "aws_route_table" "private" {
-  count = var.enable_nat_gateway ? 1 : 0
+  count  = var.enable_nat_gateway ? 1 : 0
   vpc_id = aws_vpc.this.id
   route {
     cidr_block     = "0.0.0.0/0"
@@ -147,13 +147,13 @@ resource "aws_route_table" "private" {
 
 #Associa a tabela de rotas privadas com as subnets privadas
 resource "aws_route_table_association" "private_a" {
-  count = var.enable_nat_gateway ? 1 : 0
-  subnet_id = aws_subnet.private_a.id
+  count          = var.enable_nat_gateway ? 1 : 0
+  subnet_id      = aws_subnet.private_a.id
   route_table_id = aws_route_table.private[0].id
 }
 
 resource "aws_route_table_association" "private_b" {
-  count = var.enable_nat_gateway ? 1 : 0
-  subnet_id = aws_subnet.private_b.id
+  count          = var.enable_nat_gateway ? 1 : 0
+  subnet_id      = aws_subnet.private_b.id
   route_table_id = aws_route_table.private[0].id
 }

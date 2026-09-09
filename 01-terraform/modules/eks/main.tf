@@ -3,8 +3,8 @@
 # =====================================================================
 
 resource "aws_eks_cluster" "this" {
-  name = var.cluster_name
-  version = var.kubernetes_version
+  name     = var.cluster_name
+  version  = var.kubernetes_version
   role_arn = local.cluster_role_arn
 
   vpc_config {

@@ -2,7 +2,7 @@
 
 output "environment" {
   description = "Ambiente de implantação"
-  value = var.environment
+  value       = var.environment
 }
 
 output "vpc_id" {

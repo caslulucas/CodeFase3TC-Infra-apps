@@ -12,10 +12,25 @@ type EvaluationResponse struct {
 	Result   bool   `json:"result"`
 }
 
-func (a *App) healthHandler(w http.ResponseWriter, r *http.Request) {
+// writeJSONResponse padroniza respostas JSON e registra falhas de serialização.
+func writeJSONResponse(
+	w http.ResponseWriter,
+	statusCode int,
+	payload interface{},
+) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	w.WriteHeader(statusCode)
+
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		log.Printf("Erro ao serializar resposta JSON: %v", err)
+	}
+}
+func (a *App) healthHandler(w http.ResponseWriter, r *http.Request) {
+	writeJSONResponse(
+		w,
+		http.StatusOK,
+		map[string]string{"status": "ok"},
+	)
 }
 
 func (a *App) evaluationHandler(w http.ResponseWriter, r *http.Request) {
@@ -38,7 +53,7 @@ func (a *App) evaluationHandler(w http.ResponseWriter, r *http.Request) {
 			result = false
 		} else {
 			// Outros erros (serviços offline, etc)
-			log.Printf("Erro ao avaliar flag '%s': %v", flagName, err)
+			log.Printf("Erro ao avaliar flag: %v", err)
 			http.Error(w, `{"error": "Erro interno ao avaliar a flag"}`, http.StatusBadGateway)
 			return
 		}
@@ -48,11 +63,13 @@ func (a *App) evaluationHandler(w http.ResponseWriter, r *http.Request) {
 	// Isso não bloqueia a resposta para o cliente.
 	go a.sendEvaluationEvent(userID, flagName, result)
 
-	// 4. Retornar a resposta
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(EvaluationResponse{
-		FlagName: flagName,
-		UserID:   userID,
-		Result:   result,
-	})
+	// 4. Retornar a resposta\
+	writeJSONResponse(
+		w,
+		http.StatusOK,
+		EvaluationResponse{
+			FlagName: flagName,
+			UserID:   userID,
+			Result:   result},
+	)
 }

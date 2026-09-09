@@ -19,10 +19,27 @@ type CreateKeyResponse struct {
 	Message string `json:"message"`
 }
 
-// healthHandler é um simples endpoint de verificação de saúde
+// writeJSONResponse padroniza respostas JSON e registra falhas de serialização.
+func writeJSONResponse(
+	w http.ResponseWriter,
+	statusCode int,
+	payload interface{},
+) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		// O cabeçalho HTTP já pode ter sido enviado; por isso registramos o erro.
+		log.Printf("Erro ao serializar resposta JSON: %v", err)
+	}
+}
+
 func (a *App) healthHandler(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	writeJSONResponse(
+		w,
+		http.StatusOK,
+		map[string]string{"status": "ok"},
+	)
 }
 
 // validateKeyHandler verifica se uma chave de API (enviada via Header) é válida
@@ -44,14 +61,17 @@ func (a *App) validateKeyHandler(w http.ResponseWriter, r *http.Request) {
 	err := a.DB.QueryRow("SELECT id FROM api_keys WHERE key_hash = $1 AND is_active = true", keyHash).Scan(&id)
 	if err != nil {
 		// Se não encontrar (sql.ErrNoRows), ou qualquer outro erro, a chave é inválida
-		log.Printf("Falha na validação da chave (hash: %s...): %v", keyHash[:6], err)
+		log.Printf("Falha na validação da chave")
 		http.Error(w, "Chave de API inválida ou inativa", http.StatusUnauthorized)
 		return
 	}
 
 	// Chave válida
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"message": "Chave válida"})
+	writeJSONResponse(
+		w,
+		http.StatusOK,
+		map[string]string{"message": "Chave válida"},
+	)
 }
 
 // createKeyHandler cria uma nova chave de API
@@ -94,12 +114,15 @@ func (a *App) createKeyHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	log.Printf("Nova chave criada com sucesso (ID: %d, Name: %s)", newID, req.Name)
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(CreateKeyResponse{
-		Name:    req.Name,
-		Key:     newKey, // Retorna a chave em texto plano pela última vez
-		Message: "Guarde esta chave com segurança! Você não poderá vê-la novamente.",
-	})
+	writeJSONResponse(
+		w,
+		http.StatusCreated,
+		CreateKeyResponse{
+			Name:    req.Name,
+			Key:     newKey,
+			Message: "Guarde esta chave com segurança! Você não poderá vê-la novamente.",
+		},
+	)
 }
 
 // --- Middleware ---

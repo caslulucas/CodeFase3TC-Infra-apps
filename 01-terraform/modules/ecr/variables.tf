@@ -1,16 +1,16 @@
 
 variable "project_name" {
   description = "Nome do projeto"
-  type = string
+  type        = string
 }
 
 variable "environment" {
   description = "Ambiente de execução"
-  type = string
+  type        = string
 }
 
 # Lista de microsserviços que receberão um repositório
 variable "repositories" {
   description = "Lista de repositórios ECR"
-  type = list(string)
+  type        = list(string)
 }
